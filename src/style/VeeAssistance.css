@@ -1,0 +1,41 @@
+.vee-assistance-container {
+  max-width: 400px;
+  margin: 40px auto;
+  padding: 32px 24px;
+  background: #f8fafc;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.vee-assistance-container h2 {
+  margin-bottom: 24px;
+  color: #1e293b;
+  font-size: 1.6rem;
+  text-align: center;
+}
+.vee-assistance-container button {
+  margin-right: 12px;
+  padding: 8px 18px;
+  border: none;
+  border-radius: 6px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.vee-assistance-container button:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
+.vee-assistance-container label {
+  display: flex;
+  align-items: center;
+  font-size: 1rem;
+  color: #334155;
+}
+.vee-assistance-container input[type="range"] {
+  margin-left: 12px;
+  accent-color: #2563eb;
+  width: 140px;
+}

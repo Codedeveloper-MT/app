@@ -1,0 +1,173 @@
+.home-bg {
+  width: 100%;
+  height: 100%;
+  background: #111827;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 8px;
+  overflow: hidden;
+}
+
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  width: 100%;
+  height: calc(100% - 60px); /* Subtract space for bottom nav */
+  padding-bottom: 8px;
+}
+
+.grid-item {
+  background: #1a1a1a;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: white;
+  aspect-ratio: auto;
+  height: auto;
+  cursor: pointer;
+  outline: none;
+}
+
+.grid-item:focus {
+  outline: 2px solid #646cff;
+  outline-offset: -2px;
+}
+
+.grid-item[role="button"]:active {
+  transform: scale(0.98);
+}
+
+.grid-icon {
+  color: #00ffd0;
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.grid-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+  text-align: center;
+}
+
+.grid-subtitle {
+  margin: 4px 0 0 0;
+  font-size: 12px;
+  color: #888;
+  text-align: center;
+}
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  display: flex;
+  justify-content: space-around;
+  padding: 12px 8px;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.nav-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: #64748b;
+  padding: 8px;
+  border-radius: 8px;
+  transition: all 0.2s;
+  min-width: 72px;
+  cursor: pointer;
+}
+
+.nav-button svg {
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+
+.nav-label {
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.nav-button.active {
+  color: #2563eb;
+}
+
+.nav-button:hover {
+  background: rgba(37, 99, 235, 0.1);
+}
+
+/* Android-specific adjustments */
+@media screen and (max-height: 600px) {
+  .grid-icon {
+    font-size: 20px;
+    margin-bottom: 4px;
+  }
+
+  .grid-title {
+    font-size: 14px;
+  }
+
+  .grid-subtitle {
+    font-size: 10px;
+  }
+
+  .bottom-nav {
+    height: 48px;
+  }
+
+  .nav-button {
+    font-size: 18px;
+  }
+
+  .nav-label {
+    font-size: 9px;
+  }
+}
+
+/* For larger screens */
+@media screen and (min-width: 600px) {
+  .home-bg {
+    max-width: 480px;
+    margin: 0 auto;
+  }
+}
+
+/* Prevent text selection */
+* {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Fix iOS 100vh issue */
+@supports (-webkit-touch-callout: none) {
+  .home-bg {
+    height: -webkit-fill-available;
+  }
+}
+
+/* Adjust for larger screens */
+@media (min-width: 768px) {
+  .home-bg {
+    max-width: 480px;
+    margin: 0 auto;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+  }
+}

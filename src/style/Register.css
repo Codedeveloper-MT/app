@@ -1,0 +1,39 @@
+.register-bg {
+  min-height: 100vh;
+  background: #1a202c;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.register-title {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.register-input,
+.register-select {
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  color: #111;
+  border: none;
+  width: 100%;
+  max-width: 300px;
+}
+
+.register-button {
+  background: #22c55e;
+  padding: 0.5rem 1.5rem;
+  border-radius: 0.375rem;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.register-button:hover {
+  background: #16a34a;
+}
