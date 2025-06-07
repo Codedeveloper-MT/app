@@ -1,169 +1,140 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { FaCamera, FaCameraRetro, FaSync, FaImage } from 'react-icons/fa';
+import React, { useState, useRef, useEffect } from 'react';
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import '../style/VigilentEye.css';
-import { nativeServices } from '../services/NativeServices';
 
-const VigilentEye = () => {
+const nativeServices = {
+  isNative: window.Capacitor?.isNativePlatform?.() ?? false,
+};
+
+export default function CameraComponent() {
+  const [photo, setPhoto] = useState(null);
+  const [error, setError] = useState('');
+  const [detectionMode, setDetectionMode] = useState(null); // 'objects' or 'text'
+  const [isCameraReady, setIsCameraReady] = useState(false); // Added state for camera readiness
   const videoRef = useRef(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [isFrontCamera, setIsFrontCamera] = useState(false);
-  const [capturedImage, setCapturedImage] = useState(null);
+  const canvasRef = useRef(null);
 
-  const startCamera = async (useFrontCamera = false) => {
+  const startCamera = async () => {
+    setError('');
+    setPhoto(null);
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setError('Camera API not supported in this browser');
+      return;
+    }
+
     try {
-      setIsLoading(true);
-      setError(null);
-
-      if (nativeServices.isNative) {
-        // For native platforms, we'll show the camera UI when taking a picture
-        speak("Camera ready. Tap the screen to take a picture.");
-        setIsLoading(false);
-      } else {
-        // For web, we'll use the video stream
-        const constraints = {
-          video: {
-            facingMode: useFrontCamera ? "user" : "environment",
-            width: { ideal: 1920 },
-            height: { ideal: 1080 }
-          },
-          audio: false
-        };
-
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.play();
-          speak("Camera started successfully");
-        }
-        setIsLoading(false);
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.setAttribute('playsinline', 'true');
+        videoRef.current.setAttribute('autoplay', 'true');
+        videoRef.current.setAttribute('muted', 'true');
+        videoRef.current.play();
+        setIsCameraReady(true); // Set camera as ready
       }
     } catch (err) {
-      console.error('Error accessing camera:', err);
-      setError('Unable to access camera. Please make sure camera permissions are granted.');
-      speak("Error accessing camera. Please make sure camera permissions are granted.");
-      setIsLoading(false);
-    }
-  };
-
-  const stopCamera = () => {
-    if (!nativeServices.isNative && videoRef.current && videoRef.current.srcObject) {
-      const tracks = videoRef.current.srcObject.getTracks();
-      tracks.forEach(track => track.stop());
-      videoRef.current.srcObject = null;
+      setError(`Error accessing camera: ${err.message}`);
     }
   };
 
   const takePicture = async () => {
-    try {
-      nativeServices.vibrate('light');
-      const result = await nativeServices.takePicture();
-      
-      if (nativeServices.isNative) {
-        setCapturedImage(result);
-        speak("Picture taken successfully");
+    if (nativeServices.isNative) {
+      try {
+        const image = await Camera.getPhoto({
+          resultType: CameraResultType.DataUrl,
+          source: CameraSource.Camera,
+          quality: 90,
+        });
+        setPhoto(image.dataUrl);
+        setIsCameraReady(false);
+      } catch (err) {
+        setError(`Error taking picture: ${err.message}`);
       }
-    } catch (error) {
-      console.error('Error taking picture:', error);
-      speak("Error taking picture. Please try again.");
+    } else {
+      if (videoRef.current && canvasRef.current) {
+        const canvas = canvasRef.current;
+        const video = videoRef.current;
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL('image/png');
+        setPhoto(dataUrl);
+        setIsCameraReady(false);
+
+        // Stop camera stream
+        const tracks = video.srcObject?.getTracks();
+        tracks?.forEach((track) => track.stop());
+        video.srcObject = null;
+      }
     }
   };
 
-  const toggleCamera = () => {
-    nativeServices.vibrate('medium');
-    stopCamera();
-    setIsFrontCamera(!isFrontCamera);
-    startCamera(!isFrontCamera);
-  };
-
-  const speak = (text) => {
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 0.9;
-    utterance.pitch = 1;
-    utterance.volume = 1;
-    window.speechSynthesis.speak(utterance);
+  const stopCamera = () => {
+    setIsCameraReady(false); // Reset camera readiness
+    const tracks = videoRef.current?.srcObject?.getTracks();
+    tracks?.forEach((track) => track.stop());
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
   };
 
   useEffect(() => {
-    startCamera(isFrontCamera);
-    speak("Opening camera. Please grant camera permissions if prompted.");
-
     return () => {
-      stopCamera();
+      stopCamera(); // Clean up
     };
   }, []);
 
-  if (error) {
-    return (
-      <div className="vigilent-eye-container error">
-        <div className="error-message">
-          <FaCamera className="error-icon" />
-          <p>{error}</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="vigilent-eye-container" onClick={takePicture}>
-      {isLoading && (
-        <div className="loading">
-          <div className="loading-spinner"></div>
-          <p>Starting camera...</p>
-        </div>
-      )}
-      
-      {!nativeServices.isNative && (
-        <video
-          ref={videoRef}
-          className="camera-feed"
-          playsInline
-          autoPlay
-          muted
-        />
-      )}
-
-      {capturedImage && (
-        <img 
-          src={capturedImage} 
-          alt="Captured" 
-          className="camera-feed"
-        />
-      )}
-
-      <div className="camera-controls">
-        <button 
-          className="control-button"
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleCamera();
-          }}
-          aria-label="Switch camera"
-        >
-          <FaSync className="button-icon" />
-          <span className="button-text">Switch Camera</span>
-        </button>
-
-        <button 
-          className="control-button"
-          onClick={(e) => {
-            e.stopPropagation();
+    <div className="camera-container">
+      <h2>Vigilent Eye</h2>
+      {error && <p className="error-message">{error}</p>}      <div className="camera-buttons" role="group" aria-label="Camera controls">
+        <button
+          className="camera-btn detect"
+          onClick={() => {
+            setDetectionMode('objects');
             takePicture();
           }}
-          aria-label="Take picture"
+          aria-label="Activate camera for object detection"
+          role="button"
+          tabIndex={0}
         >
-          <FaImage className="button-icon" />
-          <span className="button-text">Take Picture</span>
+          <span className="btn-icon" aria-hidden="true">📷</span>
+          <span className="btn-text">
+            Open Camera for Object Detection
+            <span className="visually-hidden">Double tap to activate</span>
+          </span>
+        </button>
+
+        <button
+          className="camera-btn text"
+          onClick={() => {
+            setDetectionMode('text');
+            takePicture();
+          }}
+          aria-label="Activate camera for text recognition"
+          role="button"
+          tabIndex={0}
+        >
+          <span className="btn-icon" aria-hidden="true">📝</span>
+          <span className="btn-text">
+            Open Camera for Text Recognition
+            <span className="visually-hidden">Double tap to activate</span>
+          </span>
         </button>
       </div>
 
-      <div className="camera-status">
-        <FaCameraRetro className="status-icon" />
-        <span>{isFrontCamera ? 'Front Camera' : 'Back Camera'}</span>
-      </div>
+      {photo && (
+        <div className="preview-container">
+          <img src={photo} alt="Captured" className="preview-image" />
+          <div className="preview-controls">
+            <button className="control-btn" onClick={() => setPhoto(null)}>
+              Take New Photo
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
-};
-
-export default VigilentEye; 
+}

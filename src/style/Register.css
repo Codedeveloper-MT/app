@@ -1,7 +1,7 @@
 .register-bg {
   min-height: 100vh;
-  background: #1a202c;
-  color: #fff;
+  background: #FFFFFF;
+  color: #000000;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -18,22 +18,23 @@
   margin-bottom: 1rem;
   padding: 0.5rem;
   border-radius: 0.375rem;
-  color: #111;
-  border: none;
+  background: #FFFFFF;
+  color: #000000;
+  border: 2px solid #000000;
   width: 100%;
   max-width: 300px;
 }
 
 .register-button {
-  background: #22c55e;
+  background: #000000;
   padding: 0.5rem 1.5rem;
   border-radius: 0.375rem;
-  color: #fff;
-  border: none;
+  color: #FFFFFF;
+  border: 2px solid #000000;
   cursor: pointer;
   transition: background 0.2s;
 }
 
 .register-button:hover {
-  background: #16a34a;
+  background: #333333;
 }

@@ -39,18 +39,17 @@ const Home = () => {
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}`
       );
       const data = await response.json();
-      
-      // Extract the readable address
       const address = data.display_name || `Latitude ${position.coords.latitude.toFixed(4)} and Longitude ${position.coords.longitude.toFixed(4)}`;
-      
-      await nativeServices.shareLocation(
-        position.coords.latitude,
-        position.coords.longitude,
-        address
-      );
 
-      speak("Opening share options");
-      nativeServices.showToast('Sharing location...', 'short');
+      // WhatsApp sharing link
+      const message = encodeURIComponent(`Here is my location: ${address}\nhttps://maps.google.com/?q=${position.coords.latitude},${position.coords.longitude}`);
+      const whatsappUrl = `https://wa.me/?text=${message}`;
+
+      // Open WhatsApp (works on mobile and desktop)
+      window.open(whatsappUrl, '_blank');
+
+      speak("Opening WhatsApp to share your location.");
+      nativeServices.showToast('Sharing location on WhatsApp...', 'short');
     } catch (error) {
       console.error('Error sharing location:', error);
       speak("Unable to share your location. Please try again.");

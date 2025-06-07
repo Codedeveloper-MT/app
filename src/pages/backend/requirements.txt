@@ -1,0 +1,11 @@
+flask
+flask-cors
+pillow
+numpy
+opencv-python
+torch
+torchvision
+pytesseract
+python-dotenv
+ultralytics  # for YOLO
+detectron2 @ git+https://github.com/facebookresearch/detectron2.git
