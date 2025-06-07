@@ -164,6 +164,29 @@ const Navigation = () => {
       return;
     }
 
+    // Save to location history with coordinates
+    const historyEntry = {
+      origin,
+      destination: dest,
+      startCoords: {
+        lat: currentLocation.latitude,
+        lon: currentLocation.longitude
+      },
+      startTime: new Date().toISOString(),
+      timestamp: new Date().toISOString()
+    };
+    
+    const savedHistory = localStorage.getItem('navigationHistory');
+    const history = savedHistory ? JSON.parse(savedHistory) : [];
+    
+    // Update end time of previous trip if it exists
+    if (history.length > 0 && !history[0].endTime) {
+      history[0].endTime = new Date().toISOString();
+    }
+    
+    history.unshift(historyEntry); // Add new entry at the beginning
+    localStorage.setItem('navigationHistory', JSON.stringify(history));
+
     const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${currentLocation.latitude},${currentLocation.longitude}&destination=${encodeURIComponent(dest)}&travelmode=driving`;
     window.open(mapsUrl, '_blank');
   };

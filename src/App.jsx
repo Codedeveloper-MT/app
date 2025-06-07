@@ -5,6 +5,7 @@ import Home from './pages/Home';
 import VeeAssistance from './pages/VeeAssistance';
 import VigilentEye from './pages/VigilentEye';
 import Navigation from './pages/Navigation';
+import LocationHistory from './pages/LocationHistory';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="/vigilent-eye" element={<VigilentEye />} />
         <Route path="/vee-assistance" element={<VeeAssistance />} />
         <Route path="/navigation" element={<Navigation />} />
+        <Route path="/location-history" element={<LocationHistory />} />
       </Routes>
     </Router>
   );
