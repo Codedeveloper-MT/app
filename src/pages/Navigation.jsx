@@ -1,5 +1,16 @@
 import React, { useState, useEffect } from 'react';
 
+const MicrophoneIcon = () => (
+  <svg 
+    style={styles.microphoneIcon}
+    viewBox="0 0 24 24" 
+    fill="currentColor"
+    aria-hidden="true"
+  >
+    <path d="M12 2C9.79 2 8 3.79 8 6v6c0 2.21 1.79 4 4 4s4-1.79 4-4V6c0-2.21-1.79-4-4-4zm-2 18.91c0-.61.54-1.11 1.2-1L15 21c.63.1 1-.29 1-.8v-.01c0-.37-.25-.71-.6-.81L11 18.2c-.41-.1-.8-.29-1.13-.54C7.67 16.12 6 13.27 6 10v-.5c0-.28.22-.5.5-.5s.5.22.5.5v.5c0 2.86 1.45 5.34 3.65 6.81.18.12.37.22.57.31l4.41 1.27c.97.28 1.64 1.15 1.64 2.15 0 1.22-.99 2.22-2.22 2.22h-5.5c-.62 0-1.12-.5-1.12-1.12v-.73z"/>
+  </svg>
+);
+
 const Navigation = () => {
   const [origin, setOrigin] = useState('');
   const [destination, setDestination] = useState('');
@@ -7,6 +18,9 @@ const Navigation = () => {
   const [error, setError] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
   const [announceMessage, setAnnounceMessage] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
+  const [recognition, setRecognition] = useState(null);
+  const [isGettingLocation, setIsGettingLocation] = useState(true);
 
   useEffect(() => {
     const checkPlatform = () => {
@@ -14,13 +28,79 @@ const Navigation = () => {
       const mobileRegex = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i;
       setIsMobile(mobileRegex.test(userAgent.toLowerCase()));
     };
-    
+
+    const initSpeechRecognition = () => {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        const recognitionInstance = new SpeechRecognition();
+        recognitionInstance.continuous = false;
+        recognitionInstance.interimResults = false;
+        recognitionInstance.lang = 'en-US';
+
+        recognitionInstance.onresult = (event) => {
+          const transcript = event.results[0][0].transcript;
+          setDestination(transcript);
+          setIsRecording(false);
+          
+          // Immediately start navigation timer with announcement
+          setAnnounceMessage(`Destination set to: ${transcript}. Opening Google Maps in 3 seconds. Press the microphone again to cancel.`);
+          startNavigationTimer(transcript);
+        };
+
+        recognitionInstance.onerror = (event) => {
+          console.error('Speech recognition error:', event.error);
+          setError('Could not recognize speech. Please try again or type manually.');
+          setAnnounceMessage('Voice recognition failed. Please try again or type your destination.');
+          setIsRecording(false);
+        };
+
+        recognitionInstance.onend = () => {
+          setIsRecording(false);
+        };
+
+        setRecognition(recognitionInstance);
+      } else {
+        console.error('Speech recognition not supported');
+        setError('Voice input is not supported in your browser.');
+      }
+    };
+
     checkPlatform();
     getCurrentLocation();
-    setAnnounceMessage('Navigation page loaded. Please allow location access for better experience.');
+    initSpeechRecognition();
+    setAnnounceMessage('Navigation page loaded. Getting your location...');
+
+    return () => {
+      if (recognition) {
+        recognition.abort();
+      }
+      if (window.lastNavigationTimeout) {
+        clearTimeout(window.lastNavigationTimeout);
+      }
+    };
   }, []);
 
-  const getCurrentLocation = () => {
+  const startNavigationTimer = (dest) => {
+    // Clear any existing timer
+    if (window.lastNavigationTimeout) {
+      clearTimeout(window.lastNavigationTimeout);
+    }
+    
+    // Start a new timer
+    const timeoutId = setTimeout(() => {
+      // Force get current location if needed
+      if (!currentLocation) {
+        getCurrentLocation(() => openInGoogleMaps(dest));
+      } else {
+        openInGoogleMaps(dest);
+      }
+    }, 3000);
+
+    window.lastNavigationTimeout = timeoutId;
+  };
+
+  const getCurrentLocation = (callback) => {
+    setIsGettingLocation(true);
     if (navigator.geolocation) {
       setAnnounceMessage('Requesting your location...');
       navigator.geolocation.getCurrentPosition(
@@ -28,18 +108,26 @@ const Navigation = () => {
           const { latitude, longitude } = position.coords;
           setCurrentLocation({ latitude, longitude });
           fetchAddress(latitude, longitude);
-          setAnnounceMessage('Location found. You can now enter your destination.');
+          setIsGettingLocation(false);
+          setAnnounceMessage('Location found. Please speak or type your destination.');
+          if (callback) callback();
         },
         error => {
           console.error('Error getting location:', error);
-          setError('Unable to get current location. Please enter manually.');
-          setAnnounceMessage('Could not get your location. Please enter your location manually.');
+          setError('Unable to get current location. Please try again.');
+          setAnnounceMessage('Could not get your location. Please try again.');
+          setIsGettingLocation(false);
         },
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+        { 
+          enableHighAccuracy: true, 
+          timeout: 15000, 
+          maximumAge: 0 // Don't use cached position
+        }
       );
     } else {
       setError('Geolocation is not supported by your browser');
       setAnnounceMessage('Location services are not available in your browser.');
+      setIsGettingLocation(false);
     }
   };
 
@@ -50,37 +138,58 @@ const Navigation = () => {
       );
       const data = await response.json();
       setOrigin(data.display_name);
-      setAnnounceMessage(`Current location set to ${data.display_name}`);
     } catch (err) {
       console.error('Error fetching address:', err);
       setAnnounceMessage('Could not get address for your location.');
     }
   };
 
-  const openInGoogleMaps = () => {
-    if (!currentLocation) {
-      setError('Please allow location access first');
-      setAnnounceMessage('Please allow location access to use navigation.');
+  const toggleRecording = () => {
+    if (!recognition) {
+      setError('Voice input is not supported in your browser.');
       return;
     }
 
-    let mapsUrl;
-    if (destination) {
-      // If destination is provided, open directions
-      mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${currentLocation.latitude},${currentLocation.longitude}&destination=${encodeURIComponent(destination)}&travelmode=driving`;
-      setAnnounceMessage('Opening directions in Google Maps.');
+    if (isRecording) {
+      recognition.stop();
+      setAnnounceMessage('Stopped listening.');
     } else {
-      // If no destination, just show current location
-      mapsUrl = `https://www.google.com/maps/search/?api=1&query=${currentLocation.latitude},${currentLocation.longitude}`;
-      setAnnounceMessage('Opening current location in Google Maps.');
+      // Check location before starting recording
+      if (!currentLocation) {
+        getCurrentLocation(() => {
+          startRecording();
+        });
+      } else {
+        startRecording();
+      }
+    }
+  };
+
+  const startRecording = () => {
+    if (window.lastNavigationTimeout) {
+      clearTimeout(window.lastNavigationTimeout);
+      window.lastNavigationTimeout = null;
+    }
+    
+    setError(null);
+    recognition.start();
+    setIsRecording(true);
+    setAnnounceMessage('Listening for destination... Please speak now.');
+  };
+
+  const openInGoogleMaps = (dest = destination) => {
+    if (!dest) {
+      setError('Please provide a destination');
+      setAnnounceMessage('Please speak or type your destination before proceeding.');
+      return;
     }
 
-    // Open in new tab for web, or in app for mobile
+    const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${currentLocation.latitude},${currentLocation.longitude}&destination=${encodeURIComponent(dest)}&travelmode=driving`;
     window.open(mapsUrl, '_blank');
   };
 
   const handleKeyPress = (event) => {
-    if (event.key === 'Enter') {
+    if (event.key === 'Enter' && destination && !isGettingLocation) {
       openInGoogleMaps();
     }
   };
@@ -98,7 +207,7 @@ const Navigation = () => {
         style={styles.inputContainer}
         onSubmit={(e) => {
           e.preventDefault();
-          openInGoogleMaps();
+          if (destination) openInGoogleMaps();
         }}
         role="search"
         aria-label="Navigation form"
@@ -119,29 +228,35 @@ const Navigation = () => {
         </div>
 
         <div style={styles.inputWrapper}>
-          <label htmlFor="destination" style={styles.label}>Destination (Optional)</label>
-          <input
-            id="destination"
-            type="text"
-            style={styles.input}
-            placeholder="Enter destination (optional)"
-            value={destination}
-            onChange={(e) => setDestination(e.target.value)}
-            onKeyPress={handleKeyPress}
-            aria-label="Enter destination"
-          />
+          <label htmlFor="destination" style={styles.label}>
+            Destination (Required)
+          </label>
+          <div style={styles.destinationContainer}>
+            <input
+              id="destination"
+              type="text"
+              style={styles.input}
+              placeholder={isRecording ? "Listening..." : "Speak or type your destination"}
+              value={destination}
+              onChange={(e) => setDestination(e.target.value)}
+              onKeyPress={handleKeyPress}
+              aria-label="Enter destination"
+              aria-required="true"
+              required
+            />
+            <button
+              type="button"
+              onClick={toggleRecording}
+              style={styles.recordButton}
+              aria-label={isRecording ? "Stop recording" : "Start recording destination"}
+            >
+              <MicrophoneIcon />
+              <span style={styles.buttonText}>
+                {isRecording ? "Stop Recording" : "Record Destination"}
+              </span>
+            </button>
+          </div>
         </div>
-
-        <button 
-          type="submit"
-          style={styles.button}
-          onClick={openInGoogleMaps}
-          aria-label="View in Google Maps"
-        >
-          <span style={styles.buttonText}>
-            View in Google Maps
-          </span>
-        </button>
       </form>
 
       {error && (
@@ -156,9 +271,13 @@ const Navigation = () => {
 
       <div style={styles.infoContainer}>
         <p style={styles.infoText}>
-          {isMobile ? 
-            "Tap 'View in Google Maps' to open navigation in your Google Maps app" :
-            "Click 'View in Google Maps' to open navigation in a new tab"
+          {isGettingLocation ? 
+            "Getting your location..." :
+            isRecording ? 
+              "Listening for destination... Speak clearly" :
+              destination ? 
+                "Navigation will start in 3 seconds. Press microphone to cancel and try again." :
+                "Press the microphone button and speak your destination"
           }
         </p>
       </div>
@@ -196,15 +315,25 @@ const styles = {
     marginBottom: '15px',
   },
   label: {
-    display: 'block',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: '5px',
     fontSize: '16px',
     fontWeight: '500',
     color: '#333',
   },
+  destinationContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    width: '100%',
+    gap: '20px',
+    marginBottom: '20px',
+  },
   input: {
     width: '100%',
-    height: '50px',
+    height: '60px',
     border: '2px solid #ddd',
     borderRadius: '8px',
     padding: '0 16px',
@@ -213,14 +342,42 @@ const styles = {
     backgroundColor: '#fff',
     color: '#333',
     transition: 'border-color 0.2s ease',
+    marginBottom: '10px',
     '&:focus': {
       borderColor: '#007AFF',
       outline: 'none',
     },
   },
+  recordButton: {
+    width: '100%',
+    height: '80px',
+    border: '2px solid #000',
+    borderRadius: '8px',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    boxShadow: '0 4px 10px rgba(0,0,0,0.2)',
+    backgroundColor: isRecording => isRecording ? '#dc3545' : '#ffffff',
+    color: isRecording => isRecording ? '#ffffff' : '#000000',
+    marginTop: '20px',
+    padding: '0 20px',
+    '&:focus': {
+      outline: '4px solid #99c9ff',
+      boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
+    },
+    '&:hover': {
+      transform: 'scale(1.02)',
+      boxShadow: '0 6px 15px rgba(0,0,0,0.3)',
+    },
+    '&:active': {
+      transform: 'scale(0.98)',
+    },
+  },
   button: {
     width: '100%',
-    height: '50px',
+    height: '60px',
     backgroundColor: '#007AFF',
     border: 'none',
     borderRadius: '8px',
@@ -229,17 +386,24 @@ const styles = {
     justifyContent: 'center',
     alignItems: 'center',
     transition: 'background-color 0.2s ease',
+    marginTop: '20px',
     '&:hover': {
       backgroundColor: '#0056b3',
     },
     '&:focus': {
-      outline: '3px solid #99c9ff',
+      outline: '4px solid #99c9ff',
+    },
+    '&:disabled': {
+      backgroundColor: '#ccc',
+      cursor: 'not-allowed',
     },
   },
   buttonText: {
-    color: '#fff',
-    fontSize: '16px',
+    color: 'inherit',
+    fontSize: '20px',
     fontWeight: 'bold',
+    flexGrow: 1,
+    textAlign: 'left',
   },
   error: {
     color: '#dc3545',
@@ -260,10 +424,16 @@ const styles = {
   },
   infoText: {
     margin: 0,
-    fontSize: '14px',
+    fontSize: '16px',
     color: '#666',
     textAlign: 'center',
   },
+  microphoneIcon: {
+    width: '50px',
+    height: '50px',
+    marginRight: '15px',
+    flexShrink: 0,
+  }
 };
 
 export default Navigation; 
