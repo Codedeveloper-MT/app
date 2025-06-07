@@ -11,7 +11,7 @@ import styled, { keyframes } from 'styled-components';
 const glowAnimation = keyframes`
   0% {
     transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(0, 255, 255, 0.7);
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.7);
   }
   70% {
     transform: scale(1);
@@ -30,6 +30,8 @@ const Container = styled.div`
   align-items: center;
   min-height: 100vh;
   background: #000;
+  cursor: pointer; /* Add cursor pointer to show it's clickable */
+  user-select: none; /* Prevent text selection when clicking */
 `;
 
 const Circle = styled.div`
@@ -116,14 +118,14 @@ const VeeAssistance = () => {
   };
 
   return (
-    <Container>
-      <Circle onClick={handleToggle}>
+    <Container onClick={handleToggle}>
+      <Circle>
         <InnerText>
-          {isActive ? 'Click to\ndeactivate' : 'Click to\ntalk to me'}
+          {isActive ? 'Active\nTap anywhere to stop' : 'Tap anywhere\nto start'}
         </InnerText>
       </Circle>
     </Container>
   );
 };
 
-export default VeeAssistance; 
+export default VeeAssistance;

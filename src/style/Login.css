@@ -5,7 +5,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  padding: 20px 20px 140px 20px; /* Added bottom padding for microphone */
+  position: relative;
 }
 
 .login-title {
@@ -24,26 +26,126 @@
   max-width: 300px;
 }
 
+/* Microphone Button Style */
+.mic-button {
+  position: fixed;
+  left: 50%;
+  bottom: 300px;
+  transform: translateX(-50%); /* Center horizontally */
+  width: 70px; /* Slightly larger */
+  height: 70px; /* Slightly larger */
+  border-radius: 50%;
+  background: #000000;
+  color: #FFFFFF;
+  border: 3px solid #FFFFFF;
+  font-size: 28px; /* Larger icon */
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+  z-index: 1000;
+}
+
+.mic-button:hover {
+  transform: translateX(-50%) scale(1.1);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+.mic-button:active {
+  transform: translateX(-50%) scale(0.95);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Accessibility Menu Styles */
+.accessibility-menu {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: #000000;
+  border-top: 2px solid #FFFFFF;
+  border-radius: 12px 12px 0 0;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  z-index: 999;
+}
+
+.accessibility-option {
+  width: 90%;
+  max-width: 400px;
+  height: 48px;
+  padding: 8px 16px;
+  font-size: 16px;
+  background: #FFFFFF;
+  color: #000000;
+  border: 2px solid #000000;
+  border-radius: 8px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.accessibility-option:hover {
+  background: #333333;
+  color: #FFFFFF;
+  transform: translateY(-2px);
+}
+
+.accessibility-option:active {
+  transform: translateY(1px);
+}
+
+/* Main Login Button */
 .login-button {
   background: #000000;
-  padding: 0.5rem 1.5rem;
-  border-radius: 0.375rem;
+  padding: 12px 24px;
+  border-radius: 8px;
   color: #FFFFFF;
   border: 2px solid #000000;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s;
+  width: 100%;
+  max-width: 300px;
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 20px;
 }
 
 .login-button:hover {
   background: #333333;
+  transform: translateY(-2px);
 }
 
-.login-register {
-  margin-top: 1rem;
+/* Mobile responsiveness */
+@media screen and (max-height: 600px) {
+  .login-bg {
+    padding: 16px;
+    padding-bottom: 180px;
+  }
+  
+  .accessibility-menu {
+    padding: 10px;
+    gap: 8px;
+  }
+  
+  .accessibility-option {
+    height: 40px;
+    font-size: 14px;
+  }
 }
 
-.login-link {
-  color: #000000;
-  cursor: pointer;
-  text-decoration: underline;
+@media screen and (max-width: 350px) {
+  .accessibility-option {
+    width: 95%;
+    padding: 8px;
+  }
 }
