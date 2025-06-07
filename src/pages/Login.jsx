@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../style/Login.css';
+import { speechService } from '../services/SpeechService';
 
 const Login = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -9,12 +10,7 @@ const Login = () => {
 
   // Speech synthesis function
   const speak = (text) => {
-    if ('speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.9;
-      utterance.pitch = 1;
-      speechSynthesis.speak(utterance);
-    }
+    speechService.speak(text);
   };
 
   // Voice input function
@@ -69,17 +65,32 @@ const Login = () => {
     return () => clearInterval(interval);
   };
 
-  const handleLogin = () => {
-    if (phoneNumber) {
-      navigate('/home');
+  const handleLogin = async () => {
+    if (!phoneNumber) {
+      await speak('Please enter your phone number');
     } else {
-      speak('Please enter your phone number');
+      await speak('Logging in');
+      navigate('/home');
     }
   };
 
   useEffect(() => {
-    // Initial greeting with new instructions
-    speak('Welcome to the login page. The microphone button is at the bottom of the screen. Double tap it to access voice commands and registration.');
+    // In iOS and some browsers, speech synthesis must be triggered by user interaction
+    const initialGreeting = () => {
+      speechService.speak('Welcome to login. Enter your phone number or use voice input.');
+    };
+
+    // Add a one-time click listener to enable speech
+    const enableSpeech = () => {
+      document.removeEventListener('click', enableSpeech);
+      initialGreeting();
+    };
+    document.addEventListener('click', enableSpeech);
+
+    return () => {
+      document.removeEventListener('click', enableSpeech);
+      speechService.stop();
+    };
   }, []);
 
   return (

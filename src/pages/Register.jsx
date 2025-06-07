@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../style/Register.css';
+import { speechService } from '../services/SpeechService';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -11,12 +12,7 @@ const Register = () => {
 
   // Speech synthesis function
   const speak = (text) => {
-    if ('speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.9;
-      utterance.pitch = 1;
-      speechSynthesis.speak(utterance);
-    }
+    speechService.speak(text);
   };
 
   // Voice input function for different fields
@@ -84,17 +80,19 @@ const Register = () => {
     return () => clearInterval(interval);
   };
 
-  const handleRegister = () => {
-    if (formData.phoneNumber && formData.username && formData.gender) {
-      navigate('/');
+  const handleRegister = async () => {
+    if (!formData.phoneNumber || !formData.username || !formData.gender) {
+      await speak('Please fill out all fields');
     } else {
-      speak('Please fill in all fields before registering');
+      await speak('Registration successful');
+      navigate('/home');
     }
   };
 
   useEffect(() => {
     // Initial greeting
-    speak('Welcome to registration. The microphone button is at the bottom of the screen. Double tap it to access voice commands.');
+    speechService.speak('Welcome to registration. Enter your details or use voice commands for assistance.');
+    return () => speechService.stop();
   }, []);
 
   return (
@@ -136,44 +134,8 @@ const Register = () => {
           >
             Register
           </button>
-         
-        <button 
-          className="accessibility-option"
-          onClick={() => startVoiceInput('phone number')}
-          aria-label="Start voice input for phone number"
-        >
-          🗣️ Speak Phone Number
-        </button>
-        <button 
-          className="accessibility-option"
-          onClick={() => startVoiceInput('username')}
-          aria-label="Start voice input for username"
-        >
-          🗣️ Speak Username
-        </button>
-        <button 
-          className="accessibility-option"
-          onClick={() => startVoiceInput('gender')}
-          aria-label="Start voice input for gender"
-        >
-          🗣️ Speak Gender
-        </button>
-        <button 
-          className="accessibility-option"
-          onClick={readScreen}
-          aria-label="Read screen content"
-        >
-          📢 Read Screen
-        </button>
-        <button 
-          className="accessibility-option"
-          onClick={() => navigate('/')}
-          aria-label="Go to login page"
-        >
-          ⬅️ Back to Login
-        </button>
         </div>
-        </div>      
+      </div>      
     </div>
   );
 };

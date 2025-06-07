@@ -33,6 +33,9 @@
   height: auto;
   cursor: pointer;
   outline: none;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .grid-item:focus {
@@ -44,10 +47,23 @@
   transform: scale(0.98);
 }
 
+.grid-item:active {
+  transform: scale(0.95);
+  opacity: 0.8;
+}
+
+@media (hover: hover) {
+  .grid-item:hover {
+    transform: translateY(-2px);
+  }
+}
+
 .grid-icon {
   color: #FFFFFF;
   font-size: 24px;
   margin-bottom: 8px;
+  min-height: 44px;
+  min-width: 44px;
 }
 
 .grid-title {

@@ -1,10 +1,18 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { FaMicrophone, FaVideo, FaMapMarkerAlt, FaShareAlt, FaDirections, FaHistory, FaHome, FaCog } from 'react-icons/fa';
 import '../style/Home.css';
 import { nativeServices } from '../services/NativeServices';
+import { speechService } from '../services/SpeechService';
+import { useEffect } from 'react';
+import React from 'react';
 
 const Home = () => {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    speechService.speak('Welcome to the home screen. Here you can access Vee Assistance, Vigilant Eye, and location services.');
+    return () => speechService.stop();
+  }, []);
 
   const speakLocation = async () => {
     try {
@@ -65,91 +73,100 @@ const Home = () => {
     window.speechSynthesis.speak(utterance);
   };
 
+  const speakMenuOption = (text) => {
+    speechService.speak(text);
+  };
+
   const handleNavigation = (path) => {
     nativeServices.vibrate('light');
     navigate(path);
   };
 
+  const handleNavigationWithSpeech = async (path, message) => {
+    await speak(message); // Speak the message
+    setTimeout(() => navigate(path), 1000); // Navigate after a short delay
+  };
+
   return (
     <div className="home-bg">
       <div className="grid-container">
-        <div 
-          onClick={() => handleNavigation('/vee-assistance')} 
+        <button
           className="grid-item"
-          role="button"
-          tabIndex={0}
+          onClick={() => {
+            speakMenuOption('Opening Vee Assistance');
+            handleNavigation('/vee-assistance');
+          }}
+          aria-label="VEE Assistance"
         >
           <div className="grid-icon">
             <FaMicrophone />
           </div>
           <h2 className="grid-title">VEE Assistance</h2>
           <p className="grid-subtitle">Voice enabled</p>
-        </div>
-        
-        <div 
-          onClick={() => handleNavigation('/vigilent-eye')} 
+        </button>
+
+        <button
           className="grid-item"
-          role="button"
-          tabIndex={0}
+          onClick={() => {
+            speakMenuOption('Opening Vigilant Eye');
+            handleNavigation('/vigilent-eye');
+          }}
+          aria-label="Vigilant Eye"
         >
           <div className="grid-icon">
             <FaVideo />
           </div>
           <h2 className="grid-title">Vigilent Eye</h2>
           <p className="grid-subtitle">Visual assistance</p>
-        </div>
-        
-        <div 
-          onClick={speakLocation} 
-          className="grid-item" 
-          role="button" 
-          tabIndex={0}
+        </button>
+
+        <button
+          className="grid-item"
+          onClick={speakLocation}
+          aria-label="Current Location"
         >
           <div className="grid-icon">
             <FaMapMarkerAlt />
           </div>
           <h2 className="grid-title">Current Location</h2>
           <p className="grid-subtitle">Tap to hear</p>
-        </div>
+        </button>
         
-        <div 
+        <button 
           onClick={shareLocationToWhatsApp} 
           className="grid-item" 
-          role="button" 
-          tabIndex={0}
+          aria-label="Share Location"
         >
           <div className="grid-icon">
             <FaShareAlt />
           </div>
           <h2 className="grid-title">Share Location</h2>
           <p className="grid-subtitle">Share to WhatsApp</p>
-        </div>
+        </button>
         
-        <div 
+        <button 
           onClick={() => handleNavigation('/navigation')} 
           className="grid-item"
-          role="button"
-          tabIndex={0}
+          aria-label="Navigation"
         >
           <div className="grid-icon">
             <FaDirections />
           </div>
           <h2 className="grid-title">Navigation</h2>
           <p className="grid-subtitle">Get directions</p>
-        </div>
+        </button>
         
-        <div 
+        <button 
           onClick={() => handleNavigation('/location-history')} 
           className="grid-item"
-          role="button"
-          tabIndex={0}
+          aria-label="Location History"
         >
           <div className="grid-icon">
             <FaHistory />
           </div>
           <h2 className="grid-title">Location History</h2>
           <p className="grid-subtitle">View past</p>
-        </div>
+        </button>
       </div>
 
       <nav className="bottom-nav">
