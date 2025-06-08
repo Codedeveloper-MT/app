@@ -1,12 +1,20 @@
 import Vapi from "@vapi-ai/web";
+import { settingsService } from '../services/SettingsService';
 
-export const vapi = new Vapi(import.meta.env.VITE_VAPI_API_KEY);
+export const vapi = new Vapi("61169b77-1bd5-4c83-9c23-b7be3b42492d");
 const assistantId = import.meta.env.VITE_ASSISTANT_ID;
 
 // Start the assistant
 export const startAssistant = async () => {
   try {
+    // Set initial voice speed from settings
+    const voiceSpeed = settingsService.getVoiceSpeed();
+    await vapi.setConfig({
+      voice: { speed: voiceSpeed }
+    });
+
     const session = await vapi.start(assistantId);
+    settingsService.setAssistantEnabled(true);
     console.log("Assistant started:", session);
     return session;
   } catch (error) {
@@ -19,6 +27,7 @@ export const startAssistant = async () => {
 export const stopAssistant = () => {
   try {
     vapi.stop();
+    settingsService.setAssistantEnabled(false);
     console.log("Assistant stopped");
   } catch (error) {
     console.error("Error stopping assistant:", error);
@@ -43,6 +52,7 @@ export const updateVoiceSpeed = async (speed) => {
     await vapi.setConfig({
       voice: { speed }
     });
+    settingsService.setVoiceSpeed(speed);
     console.log("Voice speed updated to:", speed);
   } catch (error) {
     console.error("Error updating voice speed:", error);
