@@ -1,20 +1,12 @@
 import Vapi from "@vapi-ai/web";
-import { settingsService } from '../services/SettingsService';
 
-export const vapi = new Vapi("61169b77-1bd5-4c83-9c23-b7be3b42492d");
+export const vapi = new Vapi(import.meta.env.VITE_VAPI_API_KEY);
 const assistantId = import.meta.env.VITE_ASSISTANT_ID;
 
 // Start the assistant
 export const startAssistant = async () => {
   try {
-    // Set initial voice speed from settings
-    const voiceSpeed = settingsService.getVoiceSpeed();
-    await vapi.setConfig({
-      voice: { speed: voiceSpeed }
-    });
-
     const session = await vapi.start(assistantId);
-    settingsService.setAssistantEnabled(true);
     console.log("Assistant started:", session);
     return session;
   } catch (error) {
@@ -27,7 +19,6 @@ export const startAssistant = async () => {
 export const stopAssistant = () => {
   try {
     vapi.stop();
-    settingsService.setAssistantEnabled(false);
     console.log("Assistant stopped");
   } catch (error) {
     console.error("Error stopping assistant:", error);
@@ -52,7 +43,6 @@ export const updateVoiceSpeed = async (speed) => {
     await vapi.setConfig({
       voice: { speed }
     });
-    settingsService.setVoiceSpeed(speed);
     console.log("Voice speed updated to:", speed);
   } catch (error) {
     console.error("Error updating voice speed:", error);
@@ -62,17 +52,19 @@ export const updateVoiceSpeed = async (speed) => {
 
 // Set up event listeners
 export const setupEventListeners = (handlers) => {
-  // Store handlers to ensure we remove the exact same functions
-  const eventHandlers = new Map();
-  
   Object.entries(handlers).forEach(([event, handler]) => {
-    eventHandlers.set(event, handler);
-    vapi.on(event, handler);
+    if (typeof handler === "function") {
+      vapi.on(event, handler);
+    } else {
+      console.warn(`Handler for event "${event}" is not a function and will be ignored.`);
+    }
   });
-  
+
   return () => {
-    eventHandlers.forEach((handler, event) => {
-      vapi.removeListener(event, handler);
+    Object.entries(handlers).forEach(([event, handler]) => {
+      if (typeof handler === "function") {
+        vapi.off(event, handler);
+      }
     });
   };
 };

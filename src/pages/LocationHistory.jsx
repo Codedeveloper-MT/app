@@ -84,16 +84,6 @@ const LocationHistory = () => {
 
   return (
     <main className="location-history-container" style={styles.container} role="main">
-      <div style={styles.header}>
-        <button
-          onClick={handleBackClick}
-          style={styles.backButton}
-          aria-label="Go back"
-        >
-          <FaArrowLeft />
-        </button>        <h1 style={styles.heading}>Location History</h1>
-      </div>
-
       {history.length === 0 ? (
         <p style={styles.emptyMessage}>No navigation history available</p>
       ) : (

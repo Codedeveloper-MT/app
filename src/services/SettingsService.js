@@ -8,6 +8,7 @@ class SettingsService {
         const savedSettings = localStorage.getItem('vapi_settings');
         return savedSettings ? JSON.parse(savedSettings) : {
             voiceSpeed: 1.0,
+            voiceId: 'alloy',
             assistantEnabled: false,
             lastUsed: null
         };
@@ -24,6 +25,15 @@ class SettingsService {
 
     setVoiceSpeed(speed) {
         this.settings.voiceSpeed = speed;
+        this.saveSettings(this.settings);
+    }
+
+    getVoiceId() {
+        return this.settings.voiceId;
+    }
+
+    setVoiceId(voiceId) {
+        this.settings.voiceId = voiceId;
         this.saveSettings(this.settings);
     }
 

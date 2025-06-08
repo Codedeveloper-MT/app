@@ -1,28 +1,119 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Home from './pages/Home';
-import VeeAssistance from './pages/VeeAssistance';
-import VigilentEye from './pages/VigilentEye';
-import Navigation from './pages/Navigation';
-import LocationHistory from './pages/LocationHistory';
-import Settings from './pages/Settings'; // Import the Settings component
+import { 
+  BrowserRouter as Router, 
+  Routes, 
+  Route, 
+  createRoutesFromElements,
+  createBrowserRouter,
+  RouterProvider 
+} from 'react-router-dom';
+import { lazy, Suspense } from 'react';
+
+// Lazy load components
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const Home = lazy(() => import('./pages/Home'));
+const VeeAssistance = lazy(() => import('./pages/VeeAssistance'));
+const VigilentEye = lazy(() => import('./pages/VigilentEye'));
+const Navigation = lazy(() => import('./pages/Navigation'));
+const LocationHistory = lazy(() => import('./pages/LocationHistory'));
+const Settings = lazy(() => import('./pages/Settings'));
+
+// Loading component
+function Loading() {
+  return <div>Loading...</div>;
+}
+
+// Error boundary component
+function ErrorBoundary() {
+  return (
+    <div role="alert">
+      <p>Something went wrong. Please try again or return to home.</p>
+    </div>
+  );
+}
+
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: (
+      <Suspense fallback={<Loading />}>
+        <Login />
+      </Suspense>
+    ),
+    errorElement: <ErrorBoundary />,
+  },
+  {
+    path: "/register",
+    element: (
+      <Suspense fallback={<Loading />}>
+        <Register />
+      </Suspense>
+    ),
+    errorElement: <ErrorBoundary />,
+  },
+  {
+    path: "/home",
+    element: (
+      <Suspense fallback={<Loading />}>
+        <Home />
+      </Suspense>
+    ),
+    errorElement: <ErrorBoundary />,
+  },
+  {
+    path: "/vigilent-eye",
+    element: (
+      <Suspense fallback={<Loading />}>
+        <VigilentEye />
+      </Suspense>
+    ),
+    errorElement: <ErrorBoundary />,
+  },
+  {
+    path: "/vee-assistance",
+    element: (
+      <Suspense fallback={<Loading />}>
+        <VeeAssistance />
+      </Suspense>
+    ),
+    errorElement: <ErrorBoundary />,
+  },
+  {
+    path: "/navigation",
+    element: (
+      <Suspense fallback={<Loading />}>
+        <Navigation />
+      </Suspense>
+    ),
+    errorElement: <ErrorBoundary />,
+  },
+  {
+    path: "/location-history",
+    element: (
+      <Suspense fallback={<Loading />}>
+        <LocationHistory />
+      </Suspense>
+    ),
+    errorElement: <ErrorBoundary />,
+  },
+  {
+    path: "/settings",
+    element: (
+      <Suspense fallback={<Loading />}>
+        <Settings />
+      </Suspense>
+    ),
+    errorElement: <ErrorBoundary />,
+  }
+], {
+  future: {
+    v7_startTransition: true,
+    v7_relativeSplatPath: true
+  }
+});
 
 function App() {
-  return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/home" element={<Home />} />
-        <Route path="/vigilent-eye" element={<VigilentEye />} />
-        <Route path="/vee-assistance" element={<VeeAssistance />} />
-        <Route path="/navigation" element={<Navigation />} />
-        <Route path="/location-history" element={<LocationHistory />} />
-        <Route path="/settings" element={<Settings />} /> {/* Add Settings route */}
-      </Routes>
-    </Router>
-  );
+  return <RouterProvider router={router} />;
 }
 
 export default App;
