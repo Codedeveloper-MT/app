@@ -28,6 +28,7 @@
     "@react-native-community/geolocation": "^3.4.0",
     "@vapi-ai/web": "^2.3.5",
     "leaflet": "^1.9.4",
+    "mysql2": "^3.14.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-icons": "^5.0.1",

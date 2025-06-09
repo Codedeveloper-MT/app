@@ -8,24 +8,22 @@ const Login = () => {
   const [showAccessibility, setShowAccessibility] = useState(false);
   const navigate = useNavigate();
 
-  // Speech synthesis function
   const speak = (text) => {
     speechService.speak(text);
   };
 
-  // Voice input function
   const startVoiceInput = () => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
       const recognition = new SpeechRecognition();
-      
+
       recognition.continuous = false;
       recognition.interimResults = false;
-      
+
       recognition.onstart = () => {
         speak('Please say your phone number');
       };
-      
+
       recognition.onresult = (event) => {
         const number = event.results[0][0].transcript
           .toLowerCase()
@@ -34,14 +32,13 @@ const Login = () => {
         setPhoneNumber(number);
         speak('Your phone number is ' + number.split('').join(' '));
       };
-      
+
       recognition.start();
     } else {
       speak('Voice input is not supported on your device');
     }
   };
 
-  // Screen reader function
   const readScreen = () => {
     const elements = [
       'Login page',
@@ -51,7 +48,7 @@ const Login = () => {
       'Double tap the login button to continue',
       'To create a new account, use the Register option in the accessibility menu'
     ];
-    
+
     let index = 0;
     const readNext = () => {
       if (index < elements.length) {
@@ -59,7 +56,7 @@ const Login = () => {
         index++;
       }
     };
-    
+
     readNext();
     const interval = setInterval(readNext, 3000);
     return () => clearInterval(interval);
@@ -68,19 +65,30 @@ const Login = () => {
   const handleLogin = async () => {
     if (!phoneNumber) {
       await speak('Please enter your phone number');
-    } else {
-      await speak('Logging in');
-      navigate('/home');
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/users/login?phone=${phoneNumber}`);
+      const data = await response.json();
+
+      if (response.ok) {
+        await speak(`Welcome back ${data.user.username}`);
+        navigate('/home');
+      } else {
+        await speak(data.message || 'Login failed');
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      await speak('Something went wrong while logging in');
     }
   };
 
   useEffect(() => {
-    // In iOS and some browsers, speech synthesis must be triggered by user interaction
     const initialGreeting = () => {
       speechService.speak('Welcome to login. Enter your phone number or use voice input.');
     };
 
-    // Add a one-time click listener to enable speech
     const enableSpeech = () => {
       document.removeEventListener('click', enableSpeech);
       initialGreeting();
