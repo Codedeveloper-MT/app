@@ -41,10 +41,9 @@ const Navigation = () => {
           const transcript = event.results[0][0].transcript;
           setDestination(transcript);
           setIsRecording(false);
-          
-          // Immediately start navigation timer with announcement
-          setAnnounceMessage(`Destination set to: ${transcript}. Opening Google Maps in 3 seconds. Press the microphone again to cancel.`);
-          startNavigationTimer(transcript);
+
+          // Only set the message, do NOT start navigation timer
+          setAnnounceMessage(`Destination set to: ${transcript}. Press "Show Directions" to open Google Maps.`);
         };
 
         recognitionInstance.onerror = (event) => {
@@ -79,25 +78,6 @@ const Navigation = () => {
       }
     };
   }, []);
-
-  const startNavigationTimer = (dest) => {
-    // Clear any existing timer
-    if (window.lastNavigationTimeout) {
-      clearTimeout(window.lastNavigationTimeout);
-    }
-    
-    // Start a new timer
-    const timeoutId = setTimeout(() => {
-      // Force get current location if needed
-      if (!currentLocation) {
-        getCurrentLocation(() => openInGoogleMaps(dest));
-      } else {
-        openInGoogleMaps(dest);
-      }
-    }, 3000);
-
-    window.lastNavigationTimeout = timeoutId;
-  };
 
   const getCurrentLocation = (callback) => {
     setIsGettingLocation(true);
@@ -184,6 +164,29 @@ const Navigation = () => {
       return;
     }
 
+    // Save to location history with coordinates
+    const historyEntry = {
+      origin,
+      destination: dest,
+      startCoords: {
+        lat: currentLocation.latitude,
+        lon: currentLocation.longitude
+      },
+      startTime: new Date().toISOString(),
+      timestamp: new Date().toISOString()
+    };
+    
+    const savedHistory = localStorage.getItem('navigationHistory');
+    const history = savedHistory ? JSON.parse(savedHistory) : [];
+    
+    // Update end time of previous trip if it exists
+    if (history.length > 0 && !history[0].endTime) {
+      history[0].endTime = new Date().toISOString();
+    }
+    
+    history.unshift(historyEntry); // Add new entry at the beginning
+    localStorage.setItem('navigationHistory', JSON.stringify(history));
+
     const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${currentLocation.latitude},${currentLocation.longitude}&destination=${encodeURIComponent(dest)}&travelmode=driving`;
     window.open(mapsUrl, '_blank');
   };
@@ -254,6 +257,28 @@ const Navigation = () => {
               <span style={styles.buttonText}>
                 {isRecording ? "Stop Recording" : "Record Destination"}
               </span>
+            </button>
+            {/* New Show Directions button */}
+            <button
+              type="button"
+              style={styles.button}
+              onClick={() => {
+                if (!currentLocation) {
+                  setError('Current location not available.');
+                  setAnnounceMessage('Current location not available.');
+                  return;
+                }
+                if (!destination) {
+                  setError('Please enter a destination.');
+                  setAnnounceMessage('Please enter a destination.');
+                  return;
+                }
+                openInGoogleMaps();
+              }}
+              disabled={!currentLocation || !destination}
+              aria-label="Show directions in Google Maps"
+            >
+              Show Directions
             </button>
           </div>
         </div>
@@ -436,4 +461,4 @@ const styles = {
   }
 };
 
-export default Navigation; 
+export default Navigation;

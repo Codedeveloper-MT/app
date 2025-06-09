@@ -25,7 +25,6 @@
     "@capacitor/status-bar": "^5.0.8",
     "@capacitor/toast": "^5.0.8",
     "@react-leaflet/core": "^2.1.0",
-    "@react-native-community/geolocation": "^3.4.0",
     "@vapi-ai/web": "^2.3.5",
     "leaflet": "^1.9.4",
     "mysql2": "^3.14.1",
